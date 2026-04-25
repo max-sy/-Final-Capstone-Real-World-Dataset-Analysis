@@ -1,0 +1,40 @@
+print("\n\n── STEP 9: COUNTRY PERFORMANCE ANALYSIS ──────────────")
+
+# Segment countries
+df['Performance'] = 'Medium'
+df.loc[df['Recovery Rate (%)'] >= 70, 'Performance']  = 'Good'
+df.loc[df['Recovery Rate (%)'] < 40,  'Performance']  = 'Poor'
+df.loc[df['Mortality Rate (%)'] > 10, 'Performance']  = 'Critical'
+
+perf_counts = df['Performance'].value_counts()
+print("\nCountry Performance Segments:")
+print(perf_counts)
+
+fig, axes = plt.subplots(1, 2, figsize=(13, 6))
+colors_perf = {'Good':'#1D9E75','Medium':'#185FA5','Poor':'#D97706','Critical':'#DC2626'}
+axes[0].pie(perf_counts.values,
+            labels=perf_counts.index,
+            colors=[colors_perf[k] for k in perf_counts.index],
+            autopct='%1.1f%%',
+            startangle=140,
+            wedgeprops={'edgecolor':'white','linewidth':2})
+axes[0].set_title('Country Performance Segments\n(based on Recovery & Mortality Rate)',
+                  fontsize=11, fontweight='bold')
+
+# Country comparison — top vs bottom recovery
+top_recovery = df[df['Confirmed']>1000].nlargest(8,'Recovery Rate (%)')
+bot_recovery = df[df['Confirmed']>1000].nsmallest(8,'Recovery Rate (%)')
+compare_df   = pd.concat([top_recovery, bot_recovery])
+colors_comp  = ['#1D9E75' if v >= 70 else '#DC2626' for v in compare_df['Recovery Rate (%)']]
+bars = axes[1].barh(compare_df['Country'], compare_df['Recovery Rate (%)'],
+                    color=colors_comp, edgecolor='white', height=0.65)
+axes[1].axvline(df['Recovery Rate (%)'].median(), color='gray', linestyle='--',
+                linewidth=1.2, label=f'Median: {df["Recovery Rate (%)"].median():.1f}%')
+axes[1].set_xlabel('Recovery Rate (%)', fontsize=10)
+axes[1].set_title('Best vs Worst Recovery Rates\n(countries with > 1,000 confirmed)',
+                  fontsize=11, fontweight='bold')
+axes[1].legend(fontsize=9)
+plt.tight_layout()
+plt.savefig('chart10_performance.png', dpi=150, bbox_inches='tight')
+plt.show()
+# print("Chart 10 saved: chart10_performance.png")
