@@ -1,0 +1,74 @@
+print("\n\n── STEP 7: DATA STORYTELLING ──────────────────────────")
+
+fig, axes = plt.subplots(2, 2, figsize=(14, 10))
+
+# Story 1: Americas dominance
+story1 = df.groupby('WHO Region')['Confirmed'].sum().sort_values(ascending=True)
+colors_s1 = ['#DC2626' if r == 'Americas' else '#BFDBFE' for r in story1.index]
+axes[0,0].barh(story1.index, story1.values, color=colors_s1, edgecolor='white', height=0.6)
+axes[0,0].set_title('Story 1: Americas Carries the Heaviest Burden\nConfirmed Cases by Region',
+                     fontsize=10, fontweight='bold', color='#0F2D5A')
+axes[0,0].xaxis.set_major_formatter(mticker.FuncFormatter(lambda x,_: f'{x/1e6:.1f}M'))
+axes[0,0].set_xlabel('Confirmed Cases', fontsize=9)
+for i, v in enumerate(story1.values):
+    axes[0,0].text(v+5000, i, f'{v/1e6:.1f}M', va='center', fontsize=8.5)
+
+# Story 2: Yemen outlier — high mortality
+story2 = df[df['Confirmed'] > 1000].nlargest(10, 'Mortality Rate (%)')
+colors_s2 = ['#DC2626' if c == 'Yemen' else
+             '#D97706' if m > 10 else '#185FA5'
+             for c, m in zip(story2['Country'], story2['Mortality Rate (%)'])]
+axes[0,1].bar(range(len(story2)), story2['Mortality Rate (%)'].values,
+              color=colors_s2, edgecolor='white', width=0.6)
+axes[0,1].set_xticks(range(len(story2)))
+axes[0,1].set_xticklabels(story2['Country'], rotation=35, ha='right', fontsize=8)
+axes[0,1].axhline(global_cfr, color='black', linestyle='--',
+                  linewidth=1.5, label=f'Global CFR {global_cfr}%')
+axes[0,1].set_title(f'Story 2: Yemen\'s Mortality Rate is 7× the Global Average\nTop 10 Mortality Rates (countries > 1K cases)',
+                     fontsize=10, fontweight='bold', color='#0F2D5A')
+axes[0,1].set_ylabel('Mortality Rate (%)', fontsize=9)
+axes[0,1].legend(fontsize=8)
+for i, v in enumerate(story2['Mortality Rate (%)'].values):
+    axes[0,1].text(i, v+0.2, f'{v}%', ha='center', fontsize=8, fontweight='bold')
+
+# Story 3: Active vs Recovered — progress
+story3_regions = df.groupby('WHO Region').agg(
+    Recovered=('Recovered','sum'),
+    Active=('Active','sum')
+).reset_index()
+x3 = range(len(story3_regions))
+axes[1,0].bar(x3, story3_regions['Recovered'], label='Recovered',
+              color='#1D9E75', alpha=0.85, width=0.4, edgecolor='white')
+axes[1,0].bar([i+0.4 for i in x3], story3_regions['Active'], label='Still Active',
+              color='#F59E0B', alpha=0.85, width=0.4, edgecolor='white')
+axes[1,0].set_xticks([i+0.2 for i in x3])
+axes[1,0].set_xticklabels(story3_regions['WHO Region'], rotation=25, ha='right', fontsize=8)
+axes[1,0].set_title('Story 3: Recovery is Outpacing Active Cases\nRecovered vs Active by Region',
+                     fontsize=10, fontweight='bold', color='#0F2D5A')
+axes[1,0].set_ylabel('Cases', fontsize=9)
+axes[1,0].yaxis.set_major_formatter(mticker.FuncFormatter(lambda x,_: f'{x/1e6:.1f}M'))
+axes[1,0].legend(fontsize=9)
+
+# Story 4: Weekly growth — who's accelerating?
+story4 = df.nlargest(15, 'Confirmed').sort_values('1 week % increase')
+colors_s4 = ['#DC2626' if v > 15 else '#D97706' if v > 8 else '#1D9E75'
+             for v in story4['1 week % increase']]
+axes[1,1].barh(story4['Country'], story4['1 week % increase'],
+               color=colors_s4, edgecolor='white', height=0.65)
+axes[1,1].axvline(story4['1 week % increase'].mean(), color='#374151',
+                  linestyle='--', linewidth=1.2,
+                  label=f'Avg: {story4["1 week % increase"].mean():.1f}%')
+axes[1,1].set_title('Story 4: Which Major Countries Are Accelerating?\n1-Week % Growth (Top 15 by Confirmed)',
+                     fontsize=10, fontweight='bold', color='#0F2D5A')
+axes[1,1].set_xlabel('1-Week % Increase', fontsize=9)
+axes[1,1].legend(fontsize=8)
+for i, v in enumerate(story4['1 week % increase'].values):
+    axes[1,1].text(v+0.1, i, f'{v}%', va='center', fontsize=8)
+
+plt.suptitle('Data Storytelling — 4 Key Narratives', fontsize=14, fontweight='bold',
+             color='#0F2D5A', y=1.01)
+plt.tight_layout()
+plt.savefig('chart9_storytelling.png', dpi=150, bbox_inches='tight')
+plt.show()
+# print("Chart 9 (Storytelling) saved.")
+
