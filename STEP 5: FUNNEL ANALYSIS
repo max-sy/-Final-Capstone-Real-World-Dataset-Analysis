@@ -1,0 +1,40 @@
+print("\n\n── STEP 5: FUNNEL ANALYSIS ────────────────────────────")
+
+# Case outcome funnel
+funnel_data = {
+    'Stage'  : ['Confirmed', 'Active (ongoing)', 'Recovered', 'Deaths'],
+    'Count'  : [total_confirmed, total_active, total_recovered, total_deaths],
+}
+funnel_df = pd.DataFrame(funnel_data)
+funnel_df['% of Confirmed'] = (funnel_df['Count'] / total_confirmed * 100).round(2)
+
+print("\nCase Outcome Funnel:")
+print(funnel_df.to_string(index=False))
+
+fig = go.Figure(go.Funnel(
+    y          = funnel_df['Stage'],
+    x          = funnel_df['Count'],
+    textinfo   = "value+percent initial",
+    marker     = dict(color=['#185FA5','#F59E0B','#1D9E75','#DC2626']),
+    textfont   = dict(size=13),
+))
+fig.update_layout(
+    title_text = "Global COVID-19 Case Outcome Funnel",
+    title_font = dict(size=16),
+    height=450
+)
+fig.show()
+
+# Regional funnel comparison (Plotly)
+fig2 = px.bar(
+    regional.sort_values('Confirmed', ascending=False),
+    x='WHO Region', y=['Confirmed','Deaths','Recovered'],
+    title='Regional COVID-19 Case Breakdown',
+    barmode='group',
+    color_discrete_sequence=['#185FA5','#DC2626','#1D9E75'],
+    height=450
+)
+fig2.update_layout(xaxis_tickangle=-20)
+fig2.show()
+print("Funnel charts generated (interactive — open in browser)")
+
