@@ -1,0 +1,61 @@
+print("\n\n── STEP 6: ADVANCED ANALYSIS ──────────────────────────")
+
+# 6a. Distribution of Mortality Rate
+fig, axes = plt.subplots(1, 3, figsize=(14, 5))
+
+axes[0].hist(df['Mortality Rate (%)'], bins=30, color='#DC2626',
+             edgecolor='white', alpha=0.85)
+axes[0].axvline(df['Mortality Rate (%)'].mean(), color='navy',
+                linestyle='--', linewidth=1.5,
+                label=f'Mean: {df["Mortality Rate (%)"].mean():.2f}%')
+axes[0].axvline(df['Mortality Rate (%)'].median(), color='orange',
+                linestyle='--', linewidth=1.5,
+                label=f'Median: {df["Mortality Rate (%)"].median():.2f}%')
+axes[0].set_title('Mortality Rate Distribution', fontsize=11, fontweight='bold')
+axes[0].set_xlabel('Mortality Rate (%)')
+axes[0].legend(fontsize=8)
+
+# 6b. Box plot by WHO Region — Mortality Rate
+df.boxplot(column='Mortality Rate (%)', by='WHO Region', ax=axes[1],
+           patch_artist=True,
+           boxprops=dict(facecolor='#DBEAFE', color='#185FA5'),
+           medianprops=dict(color='#DC2626', linewidth=2),
+           whiskerprops=dict(color='#185FA5'),
+           capprops=dict(color='#185FA5'),
+           flierprops=dict(marker='o', color='#185FA5', alpha=0.5, markersize=4))
+axes[1].set_title('Mortality Rate by WHO Region', fontsize=11, fontweight='bold')
+axes[1].set_xlabel('')
+axes[1].tick_params(axis='x', rotation=30, labelsize=7)
+plt.sca(axes[1])
+plt.title('Mortality Rate by WHO Region', fontsize=11, fontweight='bold')
+
+# 6c. New cases vs Confirmed (log scale)
+import numpy as np
+axes[2].scatter(np.log10(df['Confirmed']+1), df['New cases'],
+                c=df['Mortality Rate (%)'], cmap='RdYlGn_r',
+                alpha=0.7, s=40, edgecolors='white', linewidth=0.5)
+axes[2].set_xlabel('Log10(Confirmed Cases)', fontsize=10)
+axes[2].set_ylabel('New Cases (latest)', fontsize=10)
+axes[2].set_title('New Cases vs Total Confirmed\n(colour = mortality rate)',
+                  fontsize=11, fontweight='bold')
+
+plt.suptitle('Advanced Statistical Analysis', fontsize=13, fontweight='bold', y=1.01)
+plt.tight_layout()
+plt.savefig('chart8_advanced.png', dpi=150, bbox_inches='tight')
+plt.show()
+# print("Chart 8 saved: chart8_advanced.png")
+
+# 6d. Regional performance table
+print("\nDetailed Regional Performance Table:")
+reg_perf = df.groupby('WHO Region').agg(
+    Countries=('Country','count'),
+    Confirmed=('Confirmed','sum'),
+    Deaths=('Deaths','sum'),
+    Recovered=('Recovered','sum'),
+    Active=('Active','sum'),
+    Avg_Mortality=('Mortality Rate (%)','mean'),
+    Avg_Recovery=('Recovery Rate (%)','mean'),
+    New_Cases_Week=('1 week change','sum'),
+).round(2).reset_index()
+reg_perf['CFR (%)'] = (reg_perf['Deaths']/reg_perf['Confirmed']*100).round(2)
+print(reg_perf[['WHO Region','Countries','Confirmed','Deaths','CFR (%)','Avg_Recovery']].to_string(index=False))
