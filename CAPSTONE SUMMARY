@@ -1,0 +1,64 @@
+# print("\n\n" + "=" * 60)
+print("   CAPSTONE PROJECT 6 — FINAL SUMMARY REPORT")
+# print("=" * 60)
+
+print(f"""
+DATASET
+   Source       : country_wise_latest.csv (COVID-19)
+   Countries    : 187 | WHO Regions: 6
+
+ GLOBAL KPIs
+   Total Confirmed  : {total_confirmed:>12,}
+   Total Deaths     : {total_deaths:>12,}
+   Total Recovered  : {total_recovered:>12,}
+   Total Active     : {total_active:>12,}
+   Case Fatality    : {global_cfr:>11}%
+   Recovery Rate    : {global_rrr:>11}%
+
+REGIONAL INSIGHTS
+   Highest Burden    : Americas  ({df[df["WHO Region"]=="Americas"]["Confirmed"].sum():,} confirmed)
+   Fastest Growing   : Americas  (highest new cases this week)
+   Best Recovery Avg : Africa    (strong community recovery)
+
+CRITICAL FINDINGS
+   1. US alone accounts for 26% of all global cases
+   2. Yemen has a 28.56% mortality rate — 7× the global average
+   3. UK, Belgium, Italy all exceed 14% mortality — systemic strain
+   4. India shows rapid weekly growth — a key monitoring country
+
+RECOMMENDATIONS
+   1. Accelerate vaccine/aid support to high-mortality countries (Yemen, UK, Belgium)
+   2. Intensify contact tracing in countries with >15% weekly growth
+   3. Study Africa's community recovery model for global best practices
+   4. Target resources toward still-active cases in Americas (Americas = 57% of global actives)
+   5. Build real-time dashboards for WHO Region monitoring
+""")
+
+# Export summary tables
+df.to_csv('covid_cleaned.csv', index=False)
+regional.to_csv('regional_summary.csv', index=False)
+df.nlargest(20,'Confirmed')[['Country','Confirmed','Deaths','Recovered',
+    'Active','Mortality Rate (%)','Recovery Rate (%)','WHO Region']].to_csv(
+    'top20_countries.csv', index=False)
+
+print("Files exported:")
+print("   covid_cleaned.csv    — full cleaned dataset with derived columns")
+print("   regional_summary.csv — aggregated regional stats")
+print("   top20_countries.csv  — top 20 countries snapshot")
+print("\n  Charts saved (10 charts):")
+charts = [
+    "chart1_top10_confirmed.png  — Top 10 countries by confirmed",
+    "chart2_regional.png         — Regional distribution (pie + bar)",
+    "chart3_scatter.png          — Recovery vs Mortality scatter",
+    "chart4_stacked.png          — Case composition stacked bar",
+    "chart5_heatmap.png          — Correlation matrix heatmap",
+    "chart6_mortality.png        — Highest mortality rate countries",
+    "chart7_weekly.png           — Weekly growth analysis",
+    "chart8_advanced.png         — Statistical distributions",
+    "chart9_storytelling.png     — 4 narrative story charts",
+    "chart10_performance.png     — Country performance segments",
+]
+for c in charts:
+    print(f"   {c}")
+
+# print("\n✅ All steps complete! Run in Jupyter Notebook for best results.")
