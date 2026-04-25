@@ -20,3 +20,167 @@ plt.tight_layout()
 plt.savefig('chart1_top10_confirmed.png', dpi=150, bbox_inches='tight')
 plt.show()
 # print("Chart 1 saved: chart1_top10_confirmed.png")
+
+# ── CHART 2: Regional Distribution — Pie + Bar ──────────
+fig, axes = plt.subplots(1, 2, figsize=(13, 6))
+
+# Pie — confirmed by region
+region_conf = df.groupby('WHO Region')['Confirmed'].sum().sort_values(ascending=False)
+colors_pie = ['#185FA5','#1D9E75','#D97706','#DC2626','#7C3AED','#059669']
+wedges, texts, autotexts = axes[0].pie(
+    region_conf.values,
+    labels=region_conf.index,
+    autopct='%1.1f%%',
+    colors=colors_pie,
+    startangle=140,
+    pctdistance=0.78,
+    wedgeprops={'edgecolor':'white','linewidth':1.5}
+)
+for at in autotexts: at.set_fontsize(8.5)
+axes[0].set_title('Confirmed Cases by WHO Region', fontsize=12, fontweight='bold')
+
+# Bar — deaths by region
+region_deaths = df.groupby('WHO Region')['Deaths'].sum().sort_values()
+axes[1].barh(region_deaths.index, region_deaths.values,
+             color=colors_pie[::-1], edgecolor='white', height=0.55)
+axes[1].set_xlabel('Total Deaths', fontsize=10)
+axes[1].set_title('Deaths by WHO Region', fontsize=12, fontweight='bold')
+axes[1].xaxis.set_major_formatter(mticker.FuncFormatter(
+    lambda x, _: f'{x/1e3:.0f}K'))
+for i, v in enumerate(region_deaths.values):
+    axes[1].text(v + 200, i, f'{v:,}', va='center', fontsize=8.5)
+plt.tight_layout()
+plt.savefig('chart2_regional.png', dpi=150, bbox_inches='tight')
+plt.show()
+# print("Chart 2 saved: chart2_regional.png")
+
+# ── CHART 3: Mortality vs Recovery Rate — Scatter ───────
+fig, ax = plt.subplots(figsize=(11, 7))
+region_colors_map = {
+    'Americas'            : '#DC2626',
+    'Europe'              : '#185FA5',
+    'Africa'              : '#1D9E75',
+    'Eastern Mediterranean': '#D97706',
+    'Western Pacific'     : '#7C3AED',
+    'South-East Asia'     : '#059669',
+}
+for region, grp in df[df['Confirmed'] > 500].groupby('WHO Region'):
+    ax.scatter(grp['Recovery Rate (%)'], grp['Mortality Rate (%)'],
+               s=grp['Confirmed']/5000 + 20,
+               alpha=0.75,
+               label=region,
+               color=region_colors_map.get(region, 'gray'),
+               edgecolors='white', linewidth=0.7)
+
+# Annotate top countries
+for _, row in df.nlargest(8,'Confirmed').iterrows():
+    ax.annotate(row['Country'],
+                (row['Recovery Rate (%)'], row['Mortality Rate (%)']),
+                fontsize=7.5, ha='left', xytext=(4, 3),
+                textcoords='offset points',
+                color='#374151')
+
+ax.axvline(df['Recovery Rate (%)'].median(), color='gray',
+           linestyle='--', linewidth=1, alpha=0.6, label='Median Recovery')
+ax.axhline(df['Mortality Rate (%)'].median(), color='orange',
+           linestyle='--', linewidth=1, alpha=0.6, label='Median Mortality')
+ax.set_xlabel('Recovery Rate (%)', fontsize=11)
+ax.set_ylabel('Mortality Rate (%)', fontsize=11)
+ax.set_title('Recovery Rate vs Mortality Rate\n(bubble size = confirmed cases)',
+             fontsize=13, fontweight='bold')
+ax.legend(fontsize=9, loc='upper left', framealpha=0.9)
+plt.tight_layout()
+plt.savefig('chart3_scatter.png', dpi=150, bbox_inches='tight')
+plt.show()
+# print("Chart 3 saved: chart3_scatter.png")
+
+# ── CHART 4: Case Composition — Stacked Bar Top 15 ──────
+top15 = df.nlargest(15, 'Confirmed')[
+    ['Country', 'Deaths', 'Recovered', 'Active']
+].set_index('Country')
+
+fig, ax = plt.subplots(figsize=(13, 7))
+top15.plot(kind='bar', stacked=True, ax=ax,
+           color=['#DC2626','#1D9E75','#F59E0B'],
+           edgecolor='white', width=0.7)
+ax.set_title('Case Composition: Deaths, Recovered & Active\n(Top 15 Countries)',
+             fontsize=13, fontweight='bold', pad=12)
+ax.set_ylabel('Cases', fontsize=11)
+ax.set_xlabel('')
+ax.yaxis.set_major_formatter(mticker.FuncFormatter(lambda x, _: f'{x/1e6:.1f}M' if x>=1e6 else f'{x/1e3:.0f}K'))
+ax.tick_params(axis='x', rotation=35, labelsize=9)
+ax.legend(['Deaths','Recovered','Active'], fontsize=10, loc='upper right')
+plt.tight_layout()
+plt.savefig('chart4_stacked.png', dpi=150, bbox_inches='tight')
+plt.show()
+# print("Chart 4 saved: chart4_stacked.png")
+
+
+# ── CHART 5: Correlation Heatmap ─────────────────────────
+fig, ax = plt.subplots(figsize=(10, 7))
+num_cols = ['Confirmed','Deaths','Recovered','Active',
+            'New cases','New deaths','Mortality Rate (%)','Recovery Rate (%)']
+corr = df[num_cols].corr()
+mask = __import__('numpy').triu(__import__('numpy').ones_like(corr, dtype=bool))
+sns.heatmap(corr, annot=True, fmt='.2f', cmap='RdBu_r', center=0,
+            ax=ax, linewidths=0.5, square=True,
+            annot_kws={'size': 9},
+            cbar_kws={'shrink': 0.8, 'label': 'Correlation'},
+            mask=mask)
+ax.set_title('Correlation Matrix — COVID-19 Key Metrics',
+             fontsize=13, fontweight='bold', pad=12)
+plt.tight_layout()
+plt.savefig('chart5_heatmap.png', dpi=150, bbox_inches='tight')
+plt.show()
+# print("Chart 5 saved: chart5_heatmap.png")
+
+
+# ── CHART 6: Top Mortality Rate Countries (>1000 cases) ─
+high = df[df['Confirmed'] > 1000].nlargest(12, 'Mortality Rate (%)').sort_values('Mortality Rate (%)')
+
+fig, ax = plt.subplots(figsize=(10, 6))
+colors_mort = ['#DC2626' if v > 15 else '#D97706' if v > 10 else '#185FA5'
+               for v in high['Mortality Rate (%)']]
+bars = ax.barh(high['Country'], high['Mortality Rate (%)'],
+               color=colors_mort, edgecolor='white', height=0.65)
+ax.axvline(global_cfr, color='#374151', linestyle='--', linewidth=1.5,
+           label=f'Global CFR: {global_cfr}%')
+ax.set_xlabel('Mortality Rate (%)', fontsize=11)
+ax.set_title('Highest Mortality Rates\n(countries with > 1,000 confirmed cases)',
+             fontsize=13, fontweight='bold', pad=12)
+ax.legend(fontsize=9)
+for bar, val in zip(bars, high['Mortality Rate (%)']):
+    ax.text(val + 0.1, bar.get_y() + bar.get_height()/2,
+            f'{val}%', va='center', fontsize=9, fontweight='bold')
+plt.tight_layout()
+plt.savefig('chart6_mortality.png', dpi=150, bbox_inches='tight')
+plt.show()
+# print("Chart 6 saved: chart6_mortality.png")
+
+# ── CHART 7: Weekly Growth — Top 10 Countries ───────────
+top10_countries = df.nlargest(10, 'Confirmed')
+
+fig, axes = plt.subplots(1, 2, figsize=(13, 6))
+
+# 1-week % increase
+top10_sorted = top10_countries.sort_values('1 week % increase', ascending=True)
+colors_wk = ['#DC2626' if v > 20 else '#D97706' if v > 10 else '#1D9E75'
+             for v in top10_sorted['1 week % increase']]
+axes[0].barh(top10_sorted['Country'], top10_sorted['1 week % increase'],
+             color=colors_wk, edgecolor='white', height=0.6)
+axes[0].set_xlabel('1 Week % Increase', fontsize=10)
+axes[0].set_title('Weekly Growth Rate\n(Top 10 countries by confirmed)', fontsize=11, fontweight='bold')
+for i, v in enumerate(top10_sorted['1 week % increase']):
+    axes[0].text(v + 0.1, i, f'{v}%', va='center', fontsize=9)
+
+# 1-week absolute change
+top10_sorted2 = top10_countries.sort_values('1 week change', ascending=True)
+axes[1].barh(top10_sorted2['Country'], top10_sorted2['1 week change'],
+             color='#185FA5', edgecolor='white', height=0.6, alpha=0.85)
+axes[1].set_xlabel('New Cases (last week)', fontsize=10)
+axes[1].set_title('Absolute Weekly New Cases\n(Top 10 countries by confirmed)', fontsize=11, fontweight='bold')
+axes[1].xaxis.set_major_formatter(mticker.FuncFormatter(lambda x,_: f'{x/1e3:.0f}K'))
+plt.tight_layout()
+plt.savefig('chart7_weekly.png', dpi=150, bbox_inches='tight')
+plt.show()
+# print("Chart 7 saved: chart7_weekly.png")
