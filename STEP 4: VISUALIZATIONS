@@ -1,0 +1,22 @@
+#print("\n\n── STEP 4: VISUALIZATIONS ─────────────────────────────")
+
+# ── CHART 1: Top 10 Countries — Confirmed Cases ──────────
+top10 = df.nlargest(10, 'Confirmed').sort_values('Confirmed')
+
+fig, ax = plt.subplots(figsize=(11, 6))
+colors = ['#DC2626' if c == 'US' else '#185FA5' for c in top10['Country']]
+bars = ax.barh(top10['Country'], top10['Confirmed'],
+               color=colors, edgecolor='white', height=0.65)
+ax.set_xlabel('Confirmed Cases', fontsize=11)
+ax.set_title('Top 10 Countries by Confirmed COVID-19 Cases', fontsize=14, fontweight='bold', pad=12)
+ax.xaxis.set_major_formatter(mticker.FuncFormatter(lambda x, _: f'{x/1e6:.1f}M' if x >= 1e6 else f'{x/1e3:.0f}K'))
+for bar, val in zip(bars, top10['Confirmed']):
+    ax.text(val + 10000, bar.get_y() + bar.get_height()/2,
+            f'{val:,}', va='center', fontsize=9)
+ax.axvline(df['Confirmed'].mean(), color='orange', linestyle='--',
+           linewidth=1.2, label=f'Global Avg: {int(df["Confirmed"].mean()):,}')
+ax.legend(fontsize=9)
+plt.tight_layout()
+plt.savefig('chart1_top10_confirmed.png', dpi=150, bbox_inches='tight')
+plt.show()
+# print("Chart 1 saved: chart1_top10_confirmed.png")
