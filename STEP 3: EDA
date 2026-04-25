@@ -1,0 +1,44 @@
+print("\n\n── STEP 3: EDA ────────────────────────────────────────")
+total_confirmed = df['Confirmed'].sum()
+total_deaths    = df['Deaths'].sum()
+total_recovered = df['Recovered'].sum()
+total_active    = df['Active'].sum()
+global_cfr      = round(total_deaths / total_confirmed * 100, 2)
+global_rrr      = round(total_recovered / total_confirmed * 100, 2)
+
+print(f"\n📊 GLOBAL SUMMARY")
+print(f"   Total Confirmed : {total_confirmed:,}")
+print(f"   Total Deaths    : {total_deaths:,}")
+print(f"   Total Recovered : {total_recovered:,}")
+print(f"   Total Active    : {total_active:,}")
+print(f"   Case Fatality   : {global_cfr}%")
+print(f"   Recovery Rate   : {global_rrr}%")
+
+# 3b. Statistical summary
+print("\nStatistical Summary:")
+print(df[['Confirmed','Deaths','Recovered','Active',
+          'Mortality Rate (%)','Recovery Rate (%)']].describe().round(2))
+
+# 3c. Top 10 countries by confirmed
+print("\nTop 10 Countries by Confirmed Cases:")
+print(df.nlargest(10, 'Confirmed')[
+    ['Country','Confirmed','Deaths','Recovered','Active','WHO Region']
+].to_string(index=False))
+
+# 3d. Top 10 highest mortality rate (min 1000 cases)
+print("\nTop 10 Highest Mortality Rate (countries with >1000 cases):")
+high_cases = df[df['Confirmed'] > 1000].nlargest(10, 'Mortality Rate (%)')
+print(high_cases[['Country','Confirmed','Deaths','Mortality Rate (%)']].to_string(index=False))
+
+# 3e. Regional summary
+print("\nRegional Breakdown:")
+regional = df.groupby('WHO Region').agg(
+    Countries   = ('Country', 'count'),
+    Confirmed   = ('Confirmed', 'sum'),
+    Deaths      = ('Deaths', 'sum'),
+    Recovered   = ('Recovered', 'sum'),
+    Active      = ('Active', 'sum'),
+    New_Cases   = ('New cases', 'sum'),
+).assign(CFR=lambda x: (x['Deaths']/x['Confirmed']*100).round(2)).reset_index()
+print(regional.to_string(index=False))
+
