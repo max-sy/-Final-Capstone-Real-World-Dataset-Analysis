@@ -1,0 +1,26 @@
+print("\n\n── STEP 2: DATA CLEANING ──────────────────────────────")
+print("\nData Types:")
+print(df.dtypes)
+
+print("\nMissing Values:")
+print(df.isnull().sum())
+
+
+print(f"\nDuplicate rows: {df.duplicated().sum()}")
+
+print("\nSummary statistics:")
+print(df.describe())
+df.rename(columns={'Country/Region': 'Country'}, inplace=True)
+
+
+df['Mortality Rate (%)']  = (df['Deaths'] / df['Confirmed'] * 100).round(2)
+df['Recovery Rate (%)']   = (df['Recovered'] / df['Confirmed'] * 100).round(2)
+df['Active Rate (%)']     = (df['Active'] / df['Confirmed'] * 100).round(2)
+df['Log Confirmed']       = df['Confirmed'].apply(lambda x: __import__('math').log10(x+1))
+
+
+df['WHO Region'] = df['WHO Region'].astype('category')
+
+print("\nDataset after cleaning:")
+print(df[['Country', 'Confirmed', 'Deaths', 'Recovered',
+          'Active', 'Mortality Rate (%)', 'Recovery Rate (%)']].head(8))
