@@ -1,0 +1,53 @@
+print("\n\n── STEP 8: DASHBOARD ─────────────────────")
+
+# 8a. World choropleth map
+fig_map = px.choropleth(
+    df,
+    locations       = 'Country',
+    locationmode    = 'country names',
+    color           = 'Confirmed',
+    hover_name      = 'Country',
+    hover_data      = {
+        'Confirmed'         : ':,',
+        'Deaths'            : ':,',
+        'Recovered'         : ':,',
+        'Mortality Rate (%)': True,
+        'WHO Region'        : True,
+    },
+    color_continuous_scale = 'Reds',
+    title           = 'Global COVID-19 Confirmed Cases — Country Map',
+    height          = 500,
+)
+fig_map.update_layout(coloraxis_colorbar=dict(title='Confirmed'))
+fig_map.show()
+
+# 8b. Bubble chart — confirmed vs mortality
+fig_bubble = px.scatter(
+    df[df['Confirmed'] > 1000],
+    x            = 'Recovery Rate (%)',
+    y            = 'Mortality Rate (%)',
+    size         = 'Confirmed',
+    color        = 'WHO Region',
+    hover_name   = 'Country',
+    hover_data   = ['Confirmed','Deaths','Mortality Rate (%)','Recovery Rate (%)'],
+    title        = 'Recovery Rate vs Mortality Rate (bubble = confirmed cases)',
+    size_max     = 60,
+    height       = 500,
+    color_discrete_sequence = px.colors.qualitative.Bold,
+)
+fig_bubble.show()
+
+# 8c. Regional treemap
+fig_tree = px.treemap(
+    df,
+    path   = ['WHO Region', 'Country'],
+    values = 'Confirmed',
+    color  = 'Mortality Rate (%)',
+    hover_data  = ['Deaths','Recovered'],
+    color_continuous_scale = 'RdYlGn_r',
+    title  = 'COVID-19 Treemap: Confirmed Cases by Region → Country',
+    height = 550,
+)
+fig_tree.show()
+
+# print("Interactive charts shown in browser!")
